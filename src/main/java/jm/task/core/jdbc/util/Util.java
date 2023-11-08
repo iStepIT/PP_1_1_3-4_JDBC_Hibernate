@@ -51,10 +51,10 @@ public class Util {
                         .addAnnotatedClass (User.class)
                         .buildSessionFactory ();
 
-                System.out.println ("Connection SUCCESS");
+                System.out.println ("Коннект ОК");
             } catch ( Exception e ) {
                 e.printStackTrace ();
-                System.out.println ("Connection ERROR");
+                System.out.println ("Коннект ОШИБКА");
             }
         }
         return sessionFactory;
