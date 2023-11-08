@@ -32,7 +32,7 @@ public class Util {
     }
 
     //Hibernate
-    private static SessionFactory sessionFactory;
+    public static SessionFactory sessionFactory;
 
     public static SessionFactory getConnectionHibernate () {
         if (sessionFactory == null) {

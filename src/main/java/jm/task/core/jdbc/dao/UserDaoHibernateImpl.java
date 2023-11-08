@@ -4,19 +4,22 @@ import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
-    private Session session;
+    private static Session session = Util.getConnectionHibernate ().openSession ();
+    private static Transaction transaction = session.getTransaction ();
 
     public UserDaoHibernateImpl () {
     }
 
     @Override
     public void createUsersTable () {
-        try (Session session = Util.getConnectionHibernate ().openSession ()) {
-            session.beginTransaction ();
+
+        try {
+            transaction.begin ();
             session.createSQLQuery ("CREATE TABLE IF NOT EXISTS User (" +
                             "id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT," +
                             "name VARCHAR (50) NOT NULL," +
@@ -24,7 +27,7 @@ public class UserDaoHibernateImpl implements UserDao {
                             "age TINYINT NOT NULL)")
                     .executeUpdate ();
 
-            session.getTransaction ().commit ();
+            transaction.commit ();
             System.out.println ("Таблица создана");
         } catch ( HibernateException e ) {
             e.printStackTrace ();
@@ -34,10 +37,10 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void dropUsersTable () {
-        try (Session session = Util.getConnectionHibernate ().openSession ()) {
-            session.beginTransaction ();
+        try {
+            transaction.begin ();
             session.createSQLQuery ("DROP TABLE if EXISTS User").executeUpdate ();
-            session.getTransaction ().commit ();
+            transaction.commit ();
 
             System.out.println ("Таблица удалена");
 
@@ -49,13 +52,13 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void saveUser (String name, String lastName, byte age) {
-        try (Session session = Util.getConnectionHibernate ().openSession ()) {
-            session.beginTransaction ();
+        try {
+            transaction.begin ();
             session.save (new User (name, lastName, age));
-            session.getTransaction ().commit ();
-
+            transaction.commit ();
             System.out.println ("User c именем: " + name + " добавлен в базу данных");
         } catch ( HibernateException e ) {
+            transaction.rollback ();
             e.printStackTrace ();
             System.out.println ("Пользователь НЕ сохранился!");
         }
@@ -63,13 +66,15 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void removeUserById (long id) {
-        try (Session session = Util.getConnectionHibernate ().openSession ()) {
-            session.beginTransaction ();
+        try {
+            transaction.begin ();
             session.delete (session.get (User.class, id));
-            session.getTransaction ().commit ();
+            transaction.commit ();
 
             System.out.println ("Пользователь с id: " + id + " удален");
         } catch ( Exception e ) {
+            transaction.rollback ();
+            e.printStackTrace ();
             System.out.println ("Пользователь с id: " + id + " НЕ удалился");
         }
     }
@@ -77,10 +82,10 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public List<User> getAllUsers () {
         List<User> userList = null;
-        try (Session session = Util.getConnectionHibernate ().openSession ()) {
-            session.beginTransaction ();
+        try {
+            transaction.begin ();
             userList = session.createQuery ("FROM User").getResultList ();
-            session.getTransaction ().commit ();
+            transaction.commit ();
 
         } catch ( Exception e ) {
             System.out.println ("НЕ удалось вывести юзеров!");
@@ -90,13 +95,14 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void cleanUsersTable () {
-        try (Session session = Util.getConnectionHibernate ().openSession ()) {
-            session.beginTransaction ();
+        try {
+            transaction.begin ();
             session.createSQLQuery ("DELETE FROM User")
                     .executeUpdate ();
-            session.getTransaction ().commit ();
+            transaction.commit ();
             System.out.println ("Отчистка таблицы выполнена");
         } catch ( Exception e ) {
+            transaction.rollback ();
             System.out.println ("Отчистка таблицы НЕ выполнена");
         }
     }
